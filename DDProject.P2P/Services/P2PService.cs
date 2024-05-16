@@ -18,8 +18,9 @@ public class P2PService
         _port = port;
     }
 
-    public async Task Listen()
+    public async Task<string> Listen()
     {
+        StringBuilder sb = new();
         IPHostEntry ipHostInfo = await Dns.GetHostEntryAsync(_address);
         IPAddress ipAddress = ipHostInfo.AddressList[0];
         using Socket socket = new(SocketType.Stream, ProtocolType.Tcp);
@@ -33,22 +34,24 @@ public class P2PService
             byte[] buffer = new byte[1_024];
             int received = await handler.ReceiveAsync(buffer, SocketFlags.None);
             string response = Encoding.UTF8.GetString(buffer, 0, received);
+            sb.Append(response);
 
             if (response.IndexOf(EndOfMessage) > -1) /* is end of message */
             {
-                Console.WriteLine($"Socket server received message: \"{response.Replace(EndOfMessage, "")}\"");
-
+                // return ack
                 byte[] echoBytes = Encoding.UTF8.GetBytes(Ack);
                 await handler.SendAsync(echoBytes, 0);
-                Console.WriteLine($"Socket server sent acknowledgment: \"{Ack}\"");
 
                 break;
             }
         }
+
+        return sb.ToString();
     }
 
-    public async Task Send(string url, int port, string message)
+    public async Task<string> Send(string url, int port, string message)
     {
+        StringBuilder sb = new();
         IPHostEntry ipHostInfo = await Dns.GetHostEntryAsync(url);
         IPAddress ipAddress = ipHostInfo.AddressList[0];
         using Socket client = new(SocketType.Stream, ProtocolType.Tcp);
@@ -61,7 +64,6 @@ public class P2PService
             // Send message.
             byte[] messageBytes = Encoding.UTF8.GetBytes(message);
             _ = await client.SendAsync(messageBytes, SocketFlags.None);
-            Console.WriteLine($"Socket client sent message: \"{message}\"");
 
             // Receive ack.
             byte[] buffer = new byte[1_024];
@@ -69,11 +71,14 @@ public class P2PService
             string response = Encoding.UTF8.GetString(buffer, 0, received);
             if (response == Ack)
             {
-                Console.WriteLine($"Socket client received acknowledgment: \"{response}\"");
                 break;
             }
+
+            // don't append ack
+            sb.Append(response);
         }
 
         client.Shutdown(SocketShutdown.Both);
+        return sb.ToString();
     }
 }
