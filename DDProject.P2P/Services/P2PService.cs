@@ -46,7 +46,7 @@ public class P2PService
             }
         }
 
-        return sb.ToString();
+        return sb.ToString()[..(^Ack.Length)];  // remove ack
     }
 
     public async Task<string> Send(string url, int port, string message)
