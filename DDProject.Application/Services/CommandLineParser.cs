@@ -20,19 +20,41 @@ public class CommandLineParser
 
     private async Task PromptAndExecuteSend()
     {
+        Console.Write("Target url: ");
         string targetUrl = Console.ReadLine()!;
+
+        Console.Write("Target port: ");
         int targetPort = int.Parse(Console.ReadLine()!);
+
+        Console.Write("Message: ");
         string message = Console.ReadLine()!;
-        await _p2pService.Send(targetUrl, targetPort, message);
+
+        string response = await _p2pService.Send(targetUrl, targetPort, message);
+
+        if (response is "")
+        {
+            Console.WriteLine($"Ack received\n");
+            return;
+        }
+
+        Console.WriteLine($"Received response: {response}\n");
+    }
+
+    private async Task Listen()
+    {
+        Console.WriteLine("Listening...");
+        string response = await _p2pService.Listen();
+        Console.WriteLine($"Received response: {response}\n");
     }
 
     public async Task AwaitAndParseInput()
     {
+        Console.Write("Operation: ");
         string op = Console.ReadLine()!;
 
         Task t = op switch
         {
-            "listen" => _p2pService.Listen(),
+            "listen" => Listen(),
             "send" => PromptAndExecuteSend(),
             "exit" => throw new ShutdownApplicationException(),
             _ => WarnUnkownCommand(op)
