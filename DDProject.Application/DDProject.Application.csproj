@@ -7,4 +7,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\DDProject.P2P\DDProject.P2P.csproj" />
+  </ItemGroup>
+
 </Project>
